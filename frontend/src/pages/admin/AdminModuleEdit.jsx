@@ -151,6 +151,8 @@ export default function AdminModuleEdit() {
   const [editingSlide, setEditingSlide] = useState(null);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(null);
 
   const fetchModule = async () => {
     if (!id) return;
@@ -201,6 +203,34 @@ export default function AdminModuleEdit() {
     if (!window.confirm('Delete this question?')) return;
     await api.delete(`/admin/modules/${id}/questions/${qId}`);
     await fetchModule();
+  };
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPdf(true);
+    setPdfProgress('Processing PDF...');
+    const fd = new FormData();
+    fd.append('pdf', file);
+    try {
+      const { data } = await api.post(`/admin/modules/${id}/upload-pdf`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (e.total) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setPdfProgress(`Uploading: ${pct}%`);
+          }
+        }
+      });
+      setPdfProgress(`✓ Created ${data.slideCount} slides!`);
+      setTimeout(() => { setUploadingPdf(false); setPdfProgress(null); }, 2000);
+      await fetchModule();
+      e.target.value = '';
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to upload PDF');
+      setUploadingPdf(false);
+      setPdfProgress(null);
+    }
   };
 
   if (loading) return (
@@ -278,12 +308,27 @@ export default function AdminModuleEdit() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Slides</h2>
-            {!showSlideForm && (
-              <button onClick={() => { setEditingSlide(null); setShowSlideForm(true); }} className="btn-primary">
-                + Add Slide
-              </button>
+            {!showSlideForm && !uploadingPdf && (
+              <div className="flex gap-2">
+                <label className="btn-primary flex items-center gap-2 cursor-pointer">
+                  📄 Upload PDF
+                  <input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={uploadingPdf} className="hidden" />
+                </label>
+                <button onClick={() => { setEditingSlide(null); setShowSlideForm(true); }} className="btn-primary">
+                  + Add Slide
+                </button>
+              </div>
             )}
           </div>
+
+          {uploadingPdf && (
+            <div className="card bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-700 font-medium">{pdfProgress}</span>
+              </div>
+            </div>
+          )}
 
           {showSlideForm && (
             <div className="card border-blue-100">

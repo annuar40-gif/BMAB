@@ -1,0 +1,23 @@
+Server running on port 3001
+Warning: Indexing all PDF objects
+PDF extraction error: Error
+    at UnknownErrorExceptionClosure (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:443:37)
+    at Object.<anonymous> (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:446:2)
+    at __w_pdfjs_require__ (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:45:30)
+    at Object.<anonymous> (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:7939:23)
+    at __w_pdfjs_require__ (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:45:30)
+    at /home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:88:18
+    at /home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:91:10
+    at webpackUniversalModuleDefinition (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:18:20)
+    at Object.<anonymous> (/home/user/BMAB/backend/node_modules/pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js:25:3)
+    at Module._compile (node:internal/modules/cjs/loader:1705:14) {
+  message: 'bad XRef entry',
+  details: 'FormatError: bad XRef entry'
+}
+PDF upload error: Error: Failed to process PDF: bad XRef entry
+    at extractPdfPages (/home/user/BMAB/backend/utils/pdfProcessor.js:41:11)
+    at async /home/user/BMAB/backend/routes/admin.js:137:19
+✓ Extracted page 1/4
+✓ Extracted page 2/4
+✓ Extracted page 3/4
+✓ Extracted page 4/4

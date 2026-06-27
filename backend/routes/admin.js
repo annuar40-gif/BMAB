@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { extractPdfPages } = require('../utils/pdfProcessor');
 
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -120,6 +121,48 @@ router.post('/modules/:id/slides', upload.single('image'), (req, res) => {
   ).run(moduleId, title || null, content || null, imageUrl, order);
 
   res.json(db.prepare('SELECT * FROM slides WHERE id = ?').get(result.lastInsertRowid));
+});
+
+// Upload PDF and auto-create slides
+router.post('/modules/:id/upload-pdf', upload.single('pdf'), async (req, res) => {
+  const moduleId = req.params.id;
+  if (!req.file) return res.status(400).json({ error: 'PDF file is required' });
+  if (!req.file.mimetype.includes('pdf')) return res.status(400).json({ error: 'File must be a PDF' });
+
+  const module = db.prepare('SELECT * FROM modules WHERE id = ?').get(moduleId);
+  if (!module) return res.status(404).json({ error: 'Module not found' });
+
+  try {
+    const pdfPath = req.file.path;
+    const pages = await extractPdfPages(pdfPath);
+    fs.unlinkSync(pdfPath);
+
+    const slides = [];
+    const maxOrder = db.prepare('SELECT MAX(slide_order) as max FROM slides WHERE module_id = ?').get(moduleId).max || 0;
+
+    for (let i = 0; i < pages.length; i++) {
+      const p = pages[i];
+      const result = db.prepare(
+        'INSERT INTO slides (module_id, title, content, slide_order) VALUES (?, ?, ?, ?)'
+      ).run(
+        moduleId,
+        p.title,
+        p.content,
+        maxOrder + i + 1
+      );
+      slides.push(db.prepare('SELECT * FROM slides WHERE id = ?').get(result.lastInsertRowid));
+    }
+
+    res.json({
+      success: true,
+      slideCount: slides.length,
+      slides: slides,
+      message: `Created ${slides.length} slides from PDF`
+    });
+  } catch (err) {
+    console.error('PDF upload error:', err);
+    res.status(500).json({ error: err.message || 'Failed to process PDF' });
+  }
 });
 
 // Update slide
