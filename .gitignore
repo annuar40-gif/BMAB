@@ -8,3 +8,4 @@ backend/elearning.db-wal
 frontend/dist/
 .env
 *.env.local
+*.log
